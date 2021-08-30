@@ -1,10 +1,9 @@
-import React , { useRef, useState} from 'react';
+import React , { useRef, useState, useEffect} from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
 
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore} from 'firebase/firestore'
+import { getAuth, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
+import { getFirestore, collection, orderBy, limit, addDoc,query, getDocs, serverTimestamp } from 'firebase/firestore'
 
 import './App.css'
 
@@ -19,7 +18,7 @@ const app = initializeApp({
   messagingSenderId: "869134918674",
   appId: "1:869134918674:web:3a940c8b7e1fa4274ba4cb",
   measurementId: "G-SP8GYPXM7M"
-});
+}); 
 
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -47,8 +46,8 @@ function App() {
 const SignIn = () => {
     
   const SignInWithGoogle = () => {
-      const provider = new app.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider);
+      const provider = new GoogleAuthProvider();
+      signInWithRedirect(auth, provider);
   }
 
   return (  
@@ -66,35 +65,60 @@ const  SignOut = () => {
 
 const ChatRoom = () => {
   const dummydata = useRef();
-  const messageRef = db.collection('messages')
-  const query = messageRef.orderBy('createdAt').limit(25)
+  const messagethread = []
 
-  const [messages] = useCollectionData(query, {idField : 'id'});
+  // const GETMSG  = async () => {
+  //   const q = query(collection(db,'messages'),orderBy('createdAt','desc'),limit(25));
+  //   const response = await getDocs(q);
+  //   var messages = []
+  //   response.forEach(res => {
+  //     messages.push(res.data())
+  //     // console.log(res.data())
+  //   });
+  //   return messages;
+  // }
+  
+  
+  // useEffect(() => {
+  //   async function doTask(){
+  //   let data = await GETMSG();
+    
+  //   for (var i of data){
+  //     messagethread.push(data)
+  //     console.log(messagethread)
+  //   }
+  //   // return messagethread;
+  // }
+  // doTask()
+  // },[messagethread])
 
+
+  console.log(messagethread)
   const [formvalue, setFormvalue] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const { uid } = auth.currentUser;
+    const  uid  = auth.currentUser.uid;
 
-    await messageRef.add({
+    await addDoc(collection(db,'messages'), {
       text: formvalue,
-      createdAt : app.firestore.FieldValue.serverTimestamp(),
+      createdAt : serverTimestamp(),
       uid,
     })
-
+    
     setFormvalue('')
     dummydata.current.scrollIntoView({behavior : 'smooth'})
 
   }
 
   return (<>
-    <div>
-      {messages && messages.map(msg => <ChatMessage key={msg.id} message={msg}/>)}
-
+    <main>
+      
+      {console.log(messagethread.length)}
+      {messagethread && messagethread.forEach(msg => console.log(msg))}
       <span ref={dummydata}></span>
-    </div>
+    </main>
     <form onSubmit={handleSubmit}>
       <input value={formvalue} onChange={(e) => setFormvalue(e.target.value)} placeholder="Say something Nice!!"/>
       <button type="submit" disabled={!formvalue}>Send</button>
@@ -104,7 +128,8 @@ const ChatRoom = () => {
 
 const ChatMessage = (props) => {
   const { text, uid, createdAt } = props.message;
-  const messageClass = uid === auth.currentUser.uid ? 'send' : 'receive';
+  console.log(props)
+  const messageClass = (uid === auth.currentUser.uid) ? 'send' : 'receive';
 
   return(
     <>
