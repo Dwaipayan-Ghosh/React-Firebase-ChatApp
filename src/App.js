@@ -1,4 +1,4 @@
-import React , { useRef, useState, useEffect} from 'react';
+import React , { useRef, useState,useEffect } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 import { initializeApp } from 'firebase/app';
@@ -65,35 +65,26 @@ const  SignOut = () => {
 
 const ChatRoom = () => {
   const dummydata = useRef();
-  const messagethread = []
-
-  // const GETMSG  = async () => {
-  //   const q = query(collection(db,'messages'),orderBy('createdAt','desc'),limit(25));
-  //   const response = await getDocs(q);
-  //   var messages = []
-  //   response.forEach(res => {
-  //     messages.push(res.data())
-  //     // console.log(res.data())
-  //   });
-  //   return messages;
-  // }
+  const [messagethread,setMessagethread] = useState([])
   
-  
-  // useEffect(() => {
-  //   async function doTask(){
-  //   let data = await GETMSG();
+useEffect(() => {
+    const GETMSG  = async () => {
+      const q = query(collection(db,'messages'),orderBy('createdAt','desc'),limit(25));
+      const response = await getDocs(q);
+      var messages = []
+      response.forEach(res => {
+        messages.push({id: res.id,...res.data()})
+      });
+      return messages;  
+    }
+    GETMSG()
+      .then(data => {
+        setMessagethread([...data])
+      })
+      .catch(err => console.log('and error has occured',err))
     
-  //   for (var i of data){
-  //     messagethread.push(data)
-  //     console.log(messagethread)
-  //   }
-  //   // return messagethread;
-  // }
-  // doTask()
-  // },[messagethread])
+  },[])
 
-
-  console.log(messagethread)
   const [formvalue, setFormvalue] = useState('')
 
   const handleSubmit = async (e) => {
@@ -115,8 +106,8 @@ const ChatRoom = () => {
   return (<>
     <main>
       
-      {console.log(messagethread.length)}
-      {messagethread && messagethread.forEach(msg => console.log(msg))}
+      {console.log(messagethread)}
+      {messagethread && messagethread.map(msg => <ChatMessage key={msg.id} message={msg}/>)}
       <span ref={dummydata}></span>
     </main>
     <form onSubmit={handleSubmit}>
@@ -128,7 +119,6 @@ const ChatRoom = () => {
 
 const ChatMessage = (props) => {
   const { text, uid, createdAt } = props.message;
-  console.log(props)
   const messageClass = (uid === auth.currentUser.uid) ? 'send' : 'receive';
 
   return(
