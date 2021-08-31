@@ -119,7 +119,7 @@ useEffect(() => {
 
 const ChatMessage = (props) => {
   const { text, uid, createdAt } = props.message;
-  const messageClass = (uid === auth.currentUser.uid) ? 'send' : 'receive';
+  const messageClass = (uid === auth.currentUser.uid) ? 'sent' : 'received';
 
   return(
     <>
